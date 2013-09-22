@@ -1,0 +1,8 @@
+{
+    "author": "tsergei",
+    "name": "mapreduce-llvm",
+    "version": "0.1",
+    "manifest_version": 2,
+    "icon": "icon.png",
+    "homepage": "index.html"
+}

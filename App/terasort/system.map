@@ -1,0 +1,66 @@
+[
+    {
+        "name" : "map",
+        "exec" : {
+            "path": "file://mapreduce_nexe:map.nexe",
+            "env" : {
+                "MAP_NAME" : "map",
+                "REDUCE_NAME" : "red",
+                "MAP_CHUNK_SIZE": "100485700"
+            }
+        },
+        "connect" : [ "red", "map" ],
+        "file_list" : [
+        {
+            "device" : "stdin",
+            "path"   : "swift://g_115507837688591025035/mapreduce/input/terasort/*input.txt"
+        },
+        {
+            "device": "stderr",
+            "content_type": "text/plain"
+        },
+        {
+            "device" : "include"
+        },
+        {
+            "device" : "include_clang"
+        },
+        {
+            "device" : "mapreduce_nexe"
+        }
+        ]
+    },
+    {
+        "name" : "red",
+        "exec" : {
+            "path": "file://mapreduce_nexe:reduce.nexe",
+            "env" : {
+                "MAP_NAME" : "map",
+                "REDUCE_NAME" : "red"
+            }
+        },
+        "file_list" :
+        [
+        {
+            "device" : "stdout",
+            "path"   : "swift://g_115507837688591025035/mapreduce/output/*.txt",
+            "content_type": "text/plain"
+        },
+        {
+            "device": "stderr",
+            "content_type": "text/plain"
+        },
+        {
+            "device" : "include"
+        },
+        {
+            "device" : "include_clang"
+        },
+        {
+            "device" : "mapreduce_nexe"
+        }
+        ],
+        "count": 4,
+        "replicate": 0
+    }
+]

@@ -1,0 +1,23 @@
+[
+    {
+        "name" : "grep",
+        "exec" : {
+            "path": "swift://g_115507837688591025035/apps/pcregrep.nexe",
+            "args": "Revenue"
+        },
+        "file_list" : [
+        {
+            "device" : "stdin",
+            "path"   : "swift://g_115507837688591025035/mapreduce/output/red-*.txt"
+        },
+        {
+            "device": "stderr",
+            "content_type": "text/plain"
+        },
+        {
+            "device": "stdout",
+            "content_type": "text/plain"
+        }
+        ]
+    }
+]

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+    <title>Dynamic mapreduce</title>
+    <script type="text/javascript" src="FileStorage.js" ></script>
+    <script type="text/javascript" src="lib/pakmanaged.js" ></script>
+    <script type="text/javascript" src="jquery.js" ></script>
+    <script>
+        if (!String.prototype.startsWith) {
+            Object.defineProperty(String.prototype, 'startsWith', {
+                enumerable: false,
+                configurable: false,
+                writable: false,
+                value: function (searchString, position) {
+                    position = position || 0;
+                    return this.indexOf(searchString, position) === position;
+                }
+            });
+        }
+
+        if (!String.prototype.endsWith) {
+            Object.defineProperty(String.prototype, 'endsWith', {
+                enumerable: false,
+                configurable: false,
+                writable: false,
+                value: function (searchString, position) {
+                    position = position || this.length;
+                    position = position - searchString.length;
+                    var lastIndex = this.lastIndexOf(searchString);
+                    return lastIndex !== -1 && lastIndex === position;
+                }
+            });
+        }
+
+        function generateTerasortBtnClicked() {
+            FileStorage.getFile({
+                path: '.gui/tsergei/mapreduce-llvm/0.1/terasort/user_implem.c',
+                success: function (data) {
+                    var editor = ace.edit("editor");
+                    editor.setValue(data);
+                }
+            });
+        }
+        function generateWordcountBtnClicked() {
+            FileStorage.getFile({
+                path: '.gui/tsergei/mapreduce-llvm/0.1/wordcount/user_implem.c',
+                success: function (data) {
+                    var editor = ace.edit("editor");
+                    editor.setValue(data);
+                }
+            });
+        }
+        function submitBtnClicked() {
+            var dir = $('input[name=input]:checked').val();
+            if (!dir) {
+                dir = 'terasort';
+            }
+            FileStorage.getFile({
+                path: '.gui/tsergei/mapreduce-llvm/0.1/' + dir + '/system.map',
+                success: function (data) {
+                    var args = {};
+                    var Tar = require('tar-js'),
+                        tape = new Tar();
+                    var editor = ace.edit("editor")
+                    var src = editor.getValue();
+                    var out = tape.append("boot/system.map", data);
+                    var system_map = JSON.parse(data);
+                    console.log(system_map);
+                    out = tape.append("user_implem.c", src);
+                    args.dataToSend = out;
+                    args.dataType = 'application/x-tar';
+                    args.success = function (blob, report) {
+                        document.querySelector("#results-text").innerHTML = "Success!";
+
+                        FileManager.Report.create(report);
+                        FileManager.Report.full();
+                    }
+                    FileManager.Report.remove();
+                    document.querySelector("#results-text").innerHTML = "Please, wait...";
+                    FileStorage.execute(args);
+                }
+            });
+        }
+
+        var FileManager = {};
+        FileManager.Report = {};
+
+        FileManager.Report.report;
+
+        FileManager.Report.create = function (report) {
+
+            FileManager.Report.report = report;
+
+            var scrollingContentEl = document.querySelector('#report-containter');
+            var reportTemplate = document.querySelector('#reportTemplate').content;
+            scrollingContentEl.appendChild(reportTemplate.cloneNode(true));
+
+            executionReport();
+            billingReport();
+
+            function executionReport() {
+                if (report.execution.status) {
+                    document.querySelector('#execute-status-val').textContent = report.execution.status;
+                    document.querySelector('#execute-status-tr').removeAttribute('hidden');
+                }
+
+                if (report.execution.error) {
+                    document.querySelector('#execute-error-val').textContent = report.execution.error;
+                    document.querySelector('#execute-error-tr').removeAttribute('hidden');
+                }
+            }
+
+            function billingReport() {
+
+                document.querySelector('#total-time-tr').insertAdjacentHTML('beforeend', td(report.billing.totalServerTime));
+
+                var nodesLength = report.billing.nodes.length;
+                for (var i = 0; i < nodesLength; i++) {
+                    document.querySelector('#node-number-tr').insertAdjacentHTML('beforeend', td(getOrdinal(i+1)));
+                    document.querySelector('#node-server-time-tr').insertAdjacentHTML('beforeend', td(report.billing.nodes[i]['nodeServerTime']));
+
+                    document.querySelector('#system-time-tr').insertAdjacentHTML('beforeend', td(report.billing.nodes[i]['systemTime']));
+                    document.querySelector('#user-time-tr').insertAdjacentHTML('beforeend', td(report.billing.nodes[i]['userTime']));
+                    document.querySelector('#memory-used-tr').insertAdjacentHTML('beforeend', td(report.billing.nodes[i]['memoryUsed']));
+
+                    document.querySelector('#swap-used-tr').insertAdjacentHTML('beforeend', td(report.billing.nodes[i]['SwapUsed']));
+                    document.querySelector('#reads-from-disk-tr').insertAdjacentHTML('beforeend', td(report.billing.nodes[i]['readsFromDisk']));
+                    document.querySelector('#bytes-read-from-disk-tr').insertAdjacentHTML('beforeend', td(report.billing.nodes[i]['bytesReadFromDisk']));
+
+                    document.querySelector('#writes-to-disk-tr').insertAdjacentHTML('beforeend', td(report.billing.nodes[i]['writesToDisk']));
+                    document.querySelector('#bytes-written-to-disk-tr').insertAdjacentHTML('beforeend', td(report.billing.nodes[i]['bytesWrittenToDisk']));
+                    document.querySelector('#reads-from-network-tr').insertAdjacentHTML('beforeend', td(report.billing.nodes[i]['readsFromNetwork']));
+
+                    document.querySelector('#bytes-read-from-network-tr').insertAdjacentHTML('beforeend', td(report.billing.nodes[i]['bytesReadFromNetwork']));
+                    document.querySelector('#writes-to-network-tr').insertAdjacentHTML('beforeend', td(report.billing.nodes[i]['writesToNetwork']));
+                    document.querySelector('#bytes-written-to-network-tr').insertAdjacentHTML('beforeend', td(report.billing.nodes[i]['bytesWrittenToNetwork']));
+                }
+                document.querySelector('#billing-report-title').setAttribute('colspan', String(1+nodesLength));
+                if (nodesLength > 3) {
+                    document.querySelector('#billing-tbody').style.fontSize = 'x-small';
+                } else {
+                    document.querySelector('#billing-tbody').style.fontSize = 'medium';
+                }
+
+                function td(txt) {
+                    return '<td class="auto-created-report-td">' + txt + '</td>';
+                }
+
+                function getOrdinal(n) {
+                    var s=["th","st","nd","rd"],
+                            v=n%100;
+                    return n+(s[(v-20)%10]||s[v]||s[0]);
+                }
+            }
+        };
+
+        FileManager.Report.remove = function () {
+            var billingEl = document.querySelector('#report');
+            if (billingEl)
+                billingEl.parentNode.removeChild(billingEl);
+        };
+
+        FileManager.Report.full = function () {
+
+            var executionReport = FileManager.Report.report.execution;
+
+            var html = '';
+            for (var key in executionReport) {
+                if (key != 'status' && key != 'error') {
+                    html += '<tr class="execute-report-row"><td class="execute-report-part-name">' + key + '</td><td>' + executionReport[key] + '</td></tr>';
+                }
+            }
+
+            document.querySelector('#execute-tbody').innerHTML += html;
+        };
+
+
+    </script>
+    <link rel="stylesheet" href="css/pure-min.css" type="text/css">
+    <style>
+        div.content {
+            width: 50%;
+            margin: 0 auto;
+        }
+        .pure-button-ts {
+            width: 150px;
+            background: rgb(28, 184, 65);
+        }
+        .pure-button-wc {
+            width: 150px;
+            background: rgb(32, 124, 184);
+        }
+        p#source-buttons > * {
+            margin-top: 5px;
+
+        }
+        .full-width {
+            width: 100%;
+        }
+
+        #report {
+            background-color: gainsboro;
+        }
+
+        #report table {
+            width: 100%;
+        }
+
+        #report button {
+            width: 100%;
+        }
+
+        #report td {
+            font-size: small;
+        }
+        .execute-report-part-name {
+            width: 25%;
+        }
+        div#editor {
+            height: 400px;
+        }
+
+    </style>
+    <!--<style type="text/css" media="screen">-->
+        <!--#editor {-->
+            <!--position: absolute;-->
+            <!--top: 0;-->
+            <!--right: 0;-->
+            <!--bottom: 0;-->
+            <!--left: 0;-->
+        <!--}-->
+    <!--</style>-->
+
+</head>
+<body>
+<div class="pure-g content">
+    <div class="pure-u-1">
+        <div>
+            <h3>Source code editor</h3>
+            <p id="source-buttons">
+                <button id="generate-ts-btn" class="pure-button pure-button-ts" onclick="generateTerasortBtnClicked()">Terasort</button>
+                <button id="generate-wc-btn" class="pure-button pure-button-wc" onclick="generateWordcountBtnClicked()">Wordcount</button>
+            </p>
+            <!--<textarea id="editor" rows=20 cols=40 class="full-width"></textarea>-->
+            <div id="editor" class="full-width">function foo(items) {
+                var x = "All this is syntax highlighted";
+                return x;
+                }</div>
+        </div>
+
+        <div>
+            <h3>Input files</h3>
+            <form class="pure-form">
+                <label for="option-ts" class="pure-radio"><input id="option-ts" type="radio" name="input" value="terasort" >Terasort</input> </label>
+                <label for="option-wc" class="pure-radio"><input id="option-wc" type="radio" name="input" value="wordcount">Wordcount</input></label>
+            </form>
+            <button type="submit" id="submit-btn" class="pure-button pure-button-primary" onclick="submitBtnClicked()">Start</button>
+        </div>
+
+        <h3>Results</h3>
+        <p id="results-text"></p>
+        <div id="report-containter">
+            <template id="reportTemplate">
+                <div id="report">
+                    <table>
+                        <tr>
+                            <td>
+                                <table>
+                                    <thead>
+                                    <tr>
+                                        <th colspan="2" style="font-size: large">Execution Report</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="execute-tbody">
+                                    <tr id="execute-status-tr" hidden>
+                                        <td class="execute-report-part-name">
+                                            Status
+                                        </td>
+                                        <td id="execute-status-val">
+
+                                        </td>
+                                    </tr>
+                                    <tr id="execute-error-tr" hidden>
+                                        <td class="execute-report-part-name">
+                                            Error
+                                        </td>
+                                        <td id="execute-error-val">
+
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </td></tr>
+
+                        <tr><td>
+                            <table>
+                                <thead>
+                                <tr>
+                                    <th id="billing-report-title"  style="font-size: large">Billing Report</th>
+                                </tr>
+                                </thead>
+                                <tbody id="billing-tbody">
+                                <tr id="total-time-tr">
+                                    <td class="billing-report-part-name">
+                                        Total time
+                                    </td>
+                                </tr>
+                                <tr id="node-number-tr">
+                                    <td class="billing-report-part-name">
+                                        Node #
+                                    </td>
+                                </tr>
+                                <tr id="node-server-time-tr">
+                                    <td class="billing-report-part-name">
+                                        Node server time
+                                    </td>
+                                </tr>
+                                <tr id="system-time-tr">
+                                    <td class="billing-report-part-name">
+                                        System time
+                                    </td>
+                                </tr>
+                                <tr id="user-time-tr">
+                                    <td class="billing-report-part-name">
+                                        User time
+                                    </td>
+                                </tr>
+                                <tr id="memory-used-tr">
+                                    <td class="billing-report-part-name">
+                                        Memory used
+                                    </td>
+                                </tr>
+                                <tr id="swap-used-tr">
+                                    <td class="billing-report-part-name">
+                                        Swap used
+                                    </td>
+                                </tr>
+                                <tr id="reads-from-disk-tr">
+                                    <td class="billing-report-part-name">
+                                        Number of reads from disk
+                                    </td>
+                                </tr>
+                                <tr id="bytes-read-from-disk-tr">
+                                    <td class="billing-report-part-name">
+                                        Number of bytes read from disk
+                                    </td>
+                                </tr>
+                                <tr id="writes-to-disk-tr">
+                                    <td class="billing-report-part-name">
+                                        Number of writes to disk
+                                    </td>
+                                </tr>
+                                <tr id="bytes-written-to-disk-tr">
+                                    <td class="billing-report-part-name">
+                                        Number of bytes written to disk
+                                    </td>
+                                </tr>
+                                <tr id="reads-from-network-tr">
+                                    <td class="billing-report-part-name">
+                                        Number of reads from network
+                                    </td>
+                                </tr>
+                                <tr id="bytes-read-from-network-tr">
+                                    <td class="billing-report-part-name">
+                                        Number of bytes read from network
+                                    </td>
+                                </tr>
+                                <tr id="writes-to-network-tr">
+                                    <td class="billing-report-part-name">
+                                        Number of writes to network
+                                    </td>
+                                </tr>
+                                <tr id="bytes-written-to-network-tr">
+                                    <td class="billing-report-part-name">
+                                        Number of bytes written to network
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                        </tr>
+                    </table>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+<script src="lib/ace.js" type="text/javascript" charset="utf-8"></script>
+<script>
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/xcode");
+    editor.getSession().setMode("ace/mode/c_cpp");
+</script>
+</body>
+</html>
