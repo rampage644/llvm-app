@@ -1,11 +1,21 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/html">
+<html xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
 <head>
     <title>Dynamic mapreduce</title>
     <script type="text/javascript" src="FileStorage.js" ></script>
     <script type="text/javascript" src="lib/pakmanaged.js" ></script>
     <script type="text/javascript" src="jquery.js" ></script>
     <script>
+        window.onload = function () {
+            inputFilesBtnClicked();
+            outputFilesBtnClicked();
+        }
+        function getURLParameter(name) {
+            return decodeURI(
+                    (RegExp(name + '=' + '(.+?)(&|$)').exec(location.search)||[,null])[1]
+            );
+        }
+
         if (!String.prototype.startsWith) {
             Object.defineProperty(String.prototype, 'startsWith', {
                 enumerable: false,
@@ -41,6 +51,28 @@
                 }
             });
         }
+        function inputFilesBtnClicked() {
+            var dir = $('input[name=input]:checked').val();
+            if (!dir) {
+                dir = 'terasort';
+            }
+            var account = getURLParameter('account');
+            if (!account)
+                account = "g_115507837688591025035";
+
+            document.querySelector("#input-files").value = "swift://" + account + "/mapreduce/input/" + dir + "/*input.txt";
+        }
+        function outputFilesBtnClicked() {
+            var dir = $('input[name=input]:checked').val();
+            if (!dir) {
+                dir = 'terasort';
+            }
+            var account = getURLParameter('account');
+            if (!account)
+                account = "g_115507837688591025035";
+
+            document.querySelector("#output-files").value = "swift://" + account + "/mapreduce/output/*.txt";
+        }
         function generateWordcountBtnClicked() {
             FileStorage.getFile({
                 path: '.gui/tsergei/mapreduce-llvm/0.1/wordcount/user_implem.c',
@@ -61,17 +93,23 @@
                     var args = {};
                     var Tar = require('tar-js'),
                         tape = new Tar();
-                    var editor = ace.edit("editor")
-                    var src = editor.getValue();
-                    var out = tape.append("boot/system.map", data);
+                    var editor = ace.edit("editor");
+
                     var system_map = JSON.parse(data);
-                    console.log(system_map);
-                    out = tape.append("user_implem.c", src);
+                    // mappers input files
+                    system_map[0].file_list[0].path = document.querySelector("#input-files").value;
+                    // reducers output files
+                    system_map[1].file_list[0].path = document.querySelector("#output-files").value;
+
+                    // creating tar-archive, write json first
+                    var out = tape.append("boot/system.map", JSON.stringify(system_map));
+                    // append user source code
+                    out = tape.append("user_implem.c", editor.getValue());
+                    // prepare data to send
                     args.dataToSend = out;
                     args.dataType = 'application/x-tar';
                     args.success = function (blob, report) {
                         document.querySelector("#results-text").innerHTML = "Success!";
-
                         FileManager.Report.create(report);
                         FileManager.Report.full();
                     }
@@ -190,6 +228,7 @@
             width: 150px;
             background: rgb(32, 124, 184);
         }
+
         p#source-buttons > * {
             margin-top: 5px;
 
@@ -250,10 +289,24 @@
 
         <div>
             <h3>Input files</h3>
-            <form class="pure-form">
-                <label for="option-ts" class="pure-radio"><input id="option-ts" type="radio" name="input" value="terasort" >Terasort</input> </label>
-                <label for="option-wc" class="pure-radio"><input id="option-wc" type="radio" name="input" value="wordcount">Wordcount</input></label>
-            </form>
+
+            <div class="pure-form pure-form-aligned">
+
+                <fieldset>
+                    <div style="padding-left: 200px;">
+                        <label for="option-ts" class="pure-radio"><input id="option-ts" class="radio-btn" type="radio" name="input" value="terasort" >Terasort</input> </label>
+                        <label for="option-wc" class="pure-radio"><input id="option-wc" type="radio" name="input" value="wordcount">Wordcount</input></label>
+                    </div>
+                    <div class="pure-control-group">
+                        <label for="input-files" class="pure-radio">Input files path:</label><input id="input-files" type="text" style="width:50%" name="input-files" value="" >
+                        <button id="input-files-button" class="pure-button" onclick="inputFilesBtnClicked()">Set default</button>
+                    </div>
+                    <div class="pure-control-group">
+                        <label for="output-files" class="pure-radio">Output files path:</label><input id="output-files" type="text" style="width:50%" name="output-files" value="" >
+                        <button id="output-files-button" class="pure-button" onclick="outputFilesBtnClicked()">Set default</button>
+                    </div>
+                </fieldset>
+            </div>
             <button type="submit" id="submit-btn" class="pure-button pure-button-primary" onclick="submitBtnClicked()">Start</button>
         </div>
 
