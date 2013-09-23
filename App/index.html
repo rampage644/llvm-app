@@ -115,17 +115,6 @@
                 }
             });
         }
-        function reportOutputHideBtnClicked() {
-            var text = document.querySelector('#output-textarea');
-            if (text)
-                text.setAttribute('hidden', '');
-        }
-        function reportOutputShowBtnClicked() {
-            var text = document.querySelector('#output-textarea');
-            if (text)
-                text.removeAttribute('hidden');
-        }
-
         var FileManager = {};
         FileManager.Report = {};
 
@@ -241,7 +230,7 @@
     <link rel="stylesheet" href="css/pure-min.css" type="text/css">
     <style>
         div.content {
-            width: 50%;
+            width: 1000px;
             margin: 0 auto;
         }
         .pure-button-ts {
@@ -318,12 +307,12 @@
 
                 <fieldset>
                     <div class="pure-control-group">
-                        <label for="input-files" class="pure-radio">Input files path:</label><input id="input-files" type="text" style="width:50%" name="input-files" value="" >
-                        <button id="input-files-button" class="pure-button" onclick="inputFilesBtnClicked()">Set default</button>
+                        <label for="input-files" class="pure-radio">Input files path:</label><input class="pure-input-2-3" id="input-files" type="text" style="width:50%" name="input-files" value="" >
+                        <button id="input-files-button" class="pure-button" onclick="inputFilesBtnClicked()">Revert to default</button>
                     </div>
                     <div class="pure-control-group">
-                        <label for="output-files" class="pure-radio">Output files path:</label><input id="output-files" type="text" style="width:50%" name="output-files" value="" >
-                        <button id="output-files-button" class="pure-button" onclick="outputFilesBtnClicked()">Set default</button>
+                        <label for="output-files" class="pure-radio">Output files path:</label><input class="pure-input-2-3" id="output-files" type="text" style="width:50%" name="output-files" value="" >
+                        <button id="output-files-button" class="pure-button" onclick="outputFilesBtnClicked()">Revert to default</button>
                     </div>
                 </fieldset>
             </div>
@@ -334,16 +323,14 @@
         <p id="results-text"></p>
         <div id="report-containter">
             <template id="outputTemplate">
-                <div id="report-output">
+                <div id="report-output" class="pure-form">
                     <h3>Output:</h3>
-                    <button id="report-output-show" class="pure-button" onclick="reportOutputShowBtnClicked()">Show</button>
-                    <button id="report-output-hide" class="pure-button" onclick="reportOutputHideBtnClicked()">Hide</button>
                     <textarea id="output-textarea" class="full-width" rows="20">
                     </textarea>
                 </div>
             </template>
             <template id="reportTemplate">
-                <div id="report">
+                <div id="report" >
                     <table>
                         <tr>
                             <td>
