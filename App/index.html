@@ -52,21 +52,13 @@
             });
         }
         function inputFilesBtnClicked() {
-            var dir = $('input[name=input]:checked').val();
-            if (!dir) {
-                dir = 'terasort';
-            }
             var account = getURLParameter('account');
             if (!account)
                 account = "g_115507837688591025035";
 
-            document.querySelector("#input-files").value = "swift://" + account + "/mapreduce/input/" + dir + "/*input.txt";
+            document.querySelector("#input-files").value = "swift://" + account + "/mapreduce/input/terasort/*input.txt";
         }
         function outputFilesBtnClicked() {
-            var dir = $('input[name=input]:checked').val();
-            if (!dir) {
-                dir = 'terasort';
-            }
             var account = getURLParameter('account');
             if (!account)
                 account = "g_115507837688591025035";
@@ -83,10 +75,6 @@
             });
         }
         function submitBtnClicked() {
-            var dir = $('input[name=input]:checked').val();
-            if (!dir) {
-                dir = 'terasort';
-            }
             FileStorage.getFile({
                 path: '.gui/tsergei/mapreduce-llvm/0.1/system.map',
                 success: function (data) {
@@ -293,10 +281,6 @@
             <div class="pure-form pure-form-aligned">
 
                 <fieldset>
-                    <div style="padding-left: 200px;">
-                        <label for="option-ts" class="pure-radio"><input id="option-ts" class="radio-btn" type="radio" name="input" value="terasort" >Terasort</input> </label>
-                        <label for="option-wc" class="pure-radio"><input id="option-wc" type="radio" name="input" value="wordcount">Wordcount</input></label>
-                    </div>
                     <div class="pure-control-group">
                         <label for="input-files" class="pure-radio">Input files path:</label><input id="input-files" type="text" style="width:50%" name="input-files" value="" >
                         <button id="input-files-button" class="pure-button" onclick="inputFilesBtnClicked()">Set default</button>
