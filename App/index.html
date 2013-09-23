@@ -96,10 +96,17 @@
                     // prepare data to send
                     args.dataToSend = out;
                     args.dataType = 'application/x-tar';
-                    args.success = function (blob, report) {
-                        document.querySelector("#results-text").innerHTML = "Success!";
-                        FileManager.Report.create(report);
-                        FileManager.Report.full();
+                    args.success = function (blob, report, xhr) {
+                        if (xhr.target.status >= 200 && xhr.target.status <=300) {
+                            document.querySelector("#results-text").innerHTML = "Success!";
+
+                            FileManager.Report.create(report);
+                            FileManager.Report.full();
+                        }
+                        else {
+                            document.querySelector("#results-text").innerHTML = "Something went wrong..";
+                        }
+
                         FileManager.Report.output(blob);
                     }
                     FileManager.Report.remove();

@@ -542,7 +542,7 @@ var AppService = {};
 			var headers = parseResponseHeaders(headersString);
 			var report = makeReportObj(headers);
 
-			args.success(result, report);
+			args.success(result, report, e);
 		});
 		xhr.send(args.dataToSend);
 
