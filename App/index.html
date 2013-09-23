@@ -100,12 +100,23 @@
                         document.querySelector("#results-text").innerHTML = "Success!";
                         FileManager.Report.create(report);
                         FileManager.Report.full();
+                        FileManager.Report.output(blob);
                     }
                     FileManager.Report.remove();
                     document.querySelector("#results-text").innerHTML = "Please, wait...";
                     FileStorage.execute(args);
                 }
             });
+        }
+        function reportOutputHideBtnClicked() {
+            var text = document.querySelector('#output-textarea');
+            if (text)
+                text.setAttribute('hidden', '');
+        }
+        function reportOutputShowBtnClicked() {
+            var text = document.querySelector('#output-textarea');
+            if (text)
+                text.removeAttribute('hidden');
         }
 
         var FileManager = {};
@@ -184,6 +195,10 @@
             var billingEl = document.querySelector('#report');
             if (billingEl)
                 billingEl.parentNode.removeChild(billingEl);
+
+            var outputElement = document.querySelector('#report-output');
+            if (outputElement)
+                outputElement.parentNode.removeChild(outputElement);
         };
 
         FileManager.Report.full = function () {
@@ -199,6 +214,20 @@
 
             document.querySelector('#execute-tbody').innerHTML += html;
         };
+        FileManager.Report.output = function(blob) {
+            var reader = new FileReader();
+            reader.readAsText(blob);
+
+            reader.onloadend = function () {
+                var scrollingContentEl = document.querySelector('#report-containter');
+                var reportTemplate = document.querySelector('#outputTemplate').content;
+                scrollingContentEl.appendChild(reportTemplate.cloneNode(true));
+
+                scrollingContentEl.querySelector('#output-textarea').value = reader.result;
+                reportOutputHideBtnClicked();
+            }
+
+        }
 
 
     </script>
@@ -297,6 +326,15 @@
         <h3>Results</h3>
         <p id="results-text"></p>
         <div id="report-containter">
+            <template id="outputTemplate">
+                <div id="report-output">
+                    <h3>Output:</h3>
+                    <button id="report-output-show" class="pure-button" onclick="reportOutputShowBtnClicked()">Show</button>
+                    <button id="report-output-hide" class="pure-button" onclick="reportOutputHideBtnClicked()">Hide</button>
+                    <textarea id="output-textarea" class="full-width" rows="20">
+                    </textarea>
+                </div>
+            </template>
             <template id="reportTemplate">
                 <div id="report">
                     <table>
