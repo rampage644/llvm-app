@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
 <head>
     <title>Dynamic mapreduce</title>
-    <script type="text/javascript" src="FileStorage.js" ></script>
+    <script type="text/javascript" src="../../lib/FileStorage.js" ></script>
     <script type="text/javascript" src="../../lib/pakmanaged.js" ></script>
     <script type="text/javascript" src="../../lib/jquery.js" ></script>
     <script>
@@ -220,7 +220,6 @@
                 scrollingContentEl.appendChild(reportTemplate.cloneNode(true));
 
                 scrollingContentEl.querySelector('#output-textarea').value = reader.result;
-                reportOutputHideBtnClicked();
             }
 
         }
