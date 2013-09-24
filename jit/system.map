@@ -1,0 +1,24 @@
+[
+    {
+        "name" : "jit",
+        "exec" : {
+            "path": "file://jit_nexe:jit.nexe",
+            "args": ""
+        },
+        "file_list" : [
+        {
+            "device": "stdout",
+            "content_type": "text/plain"
+        },
+        {
+            "device" : "include"
+        },
+        {
+            "device" : "include_clang"
+        },
+        {
+            "device" : "jit_nexe"
+        }
+        ]
+    }
+]
